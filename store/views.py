@@ -3,21 +3,18 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import OrderItem, Product
-from .serializers import ProductSerializer
+from .models import OrderItem, Product, Collection
+from .serializers import CollectionSerializer, ProductSerializer
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.generics import ListCreateAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
+from django.db.models import Count
 # Create your views here.
 
 
 class ProductList(ListCreateAPIView):
-
-    def get_queryset(self):
-        return Product.objects.select_related('collection').all()
-
-    def get_serializer_class(self):
-        return ProductSerializer
+    queryset = Product.objects.select_related('collection').all()
+    serializer_class = ProductSerializer
 
     def get_serializer_context(self):
         return {'request': self.request}
@@ -38,7 +35,19 @@ class ProductDetail(APIView):
         product = get_object_or_404(Product, pk=id)
         product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-        
-@api_view()
-def collection_detail(request, pk):
-    return Response('Ok')
+
+
+class CollectionList(ListCreateAPIView):
+    queryset= Collection.objects.annotate(product_count=Count('product')).all()
+    serializer_class = CollectionSerializer
+
+class CollectionDetail(RetrieveDestroyAPIView):
+    queryset = Collection.objects.annotate(products_count=Count('product'))
+    serializer_class=CollectionSerializer
+
+    def delete(self, request, pk):
+        collection = get_object_or_404(Collection, pk=pk)
+        if collection.product.count()> 0:
+            return Response({'error':'Collection have some products'}, status=status.HTTP_204_NO_CONTENT)
+        collection.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
