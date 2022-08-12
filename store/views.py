@@ -19,18 +19,19 @@ class ProductViewSet(ModelViewSet):
     def get_serializer_context(self):
         return {'request': self.request}
 
-    def delete(self, request):
-        product = get_object_or_404(Product, pk=id)
-        product.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    def destroy(self, request, *args, **kwargs):
+        if OrderItem.objects.filter(product_id=kwargs['pk']).count() > 0 :
+            return Response({'error': 'Product cannot be deleted'})
+        return super().destroy(request, *args, **kwargs)
 
 
 class CollectionViewSet(ModelViewSet):
     queryset= Collection.objects.annotate(product_count=Count('product')).all()
     serializer_class = CollectionSerializer
 
-    def delete(self, request, pk):
-        collection = get_object_or_404(Collection, pk=pk)
-        collection.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+
+
 
