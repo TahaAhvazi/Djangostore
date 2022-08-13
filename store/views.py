@@ -14,6 +14,7 @@ from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from rest_framework.filters import OrderingFilter
+from rest_framework.pagination import PageNumberPagination
 # Create your views here.
 
 class ProductViewSet(ModelViewSet):
@@ -23,7 +24,8 @@ class ProductViewSet(ModelViewSet):
     filterset_class = ProductFilter
     search_fields = ['title', 'description']
     ordering_fields = ['unit_price']
-
+    pagination_class = PageNumberPagination
+    
 
     def get_serializer_context(self):
         return {'request': self.request}
