@@ -4,8 +4,8 @@ from django.http import HttpResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from store.filters import ProductFilter
-from .models import Cart, CartItem, OrderItem, Product, Collection, Review
-from .serializers import AddCartItemSerializer, CartItemSerializer, CartSerializer, CollectionSerializer, ProductSerializer, ReviewSerializer, UpdateCartItemSerializer
+from .models import Cart, CartItem, Customer, OrderItem, Product, Collection, Review
+from .serializers import AddCartItemSerializer, CartItemSerializer, CartSerializer, CollectionSerializer, CustomerSerializer, ProductSerializer, ReviewSerializer, UpdateCartItemSerializer
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
@@ -16,7 +16,7 @@ from rest_framework.filters import SearchFilter
 from rest_framework.filters import OrderingFilter
 from rest_framework.pagination import PageNumberPagination
 from .pagination import DefaultPagination
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, DestroyModelMixin
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, UpdateModelMixin
 # Create your views here.
 
 class ProductViewSet(ModelViewSet):
@@ -75,7 +75,8 @@ class CartitemViewSet(ModelViewSet):
 
     def get_queryset(self):
         return CartItem.objects.filter(cart_id=self.kwargs['cart_pk']).select_related('product')
-    
 
 
- 
+class CustomerViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
+    queryset = Customer.objects.all()
+    serializer_class = CustomerSerializer
