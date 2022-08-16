@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from store.filters import ProductFilter
+from .permissions import IsAdminOrReadOnly
 from .models import Cart, CartItem, Customer, OrderItem, Product, Collection, Review
 from .serializers import AddCartItemSerializer, CartItemSerializer, CartSerializer, CollectionSerializer, CustomerSerializer, ProductSerializer, ReviewSerializer, UpdateCartItemSerializer
 from rest_framework import status
@@ -19,6 +20,9 @@ from rest_framework.pagination import PageNumberPagination
 from .pagination import DefaultPagination
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, UpdateModelMixin
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework.permissions import DjangoModelPermissions
+
 # Create your views here.
 
 class ProductViewSet(ModelViewSet):
@@ -26,6 +30,7 @@ class ProductViewSet(ModelViewSet):
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ProductFilter
+    permission_classes = [IsAdminOrReadOnly]
     search_fields = ['title', 'description']
     ordering_fields = ['unit_price']
     pagination_class = DefaultPagination
@@ -43,6 +48,7 @@ class ProductViewSet(ModelViewSet):
 class CollectionViewSet(ModelViewSet):
     queryset= Collection.objects.annotate(product_count=Count('product')).all()
     serializer_class = CollectionSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
 
     def destroy(self, request, *args, **kwargs):
@@ -79,10 +85,13 @@ class CartitemViewSet(ModelViewSet):
         return CartItem.objects.filter(cart_id=self.kwargs['cart_pk']).select_related('product')
 
 
-class CustomerViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
+class CustomerViewSet(ModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
-    @action(detail=False, methods=['GET', 'PUT'])
+    permission_classes = [DjangoModelPermissions]
+
+
+    @action(detail=False, methods=['GET', 'PUT'], permission_classes = [IsAuthenticated])
     def me(self, request):
         (customer, created) = Customer.objects.get_or_create(user_id=request.user.id)
         if request.method == 'GET':
