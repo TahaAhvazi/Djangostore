@@ -1,4 +1,5 @@
 import imp
+from urllib import request
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from rest_framework.decorators import api_view
@@ -17,6 +18,7 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.pagination import PageNumberPagination
 from .pagination import DefaultPagination
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin, DestroyModelMixin, UpdateModelMixin
+from rest_framework.decorators import action
 # Create your views here.
 
 class ProductViewSet(ModelViewSet):
@@ -80,3 +82,15 @@ class CartitemViewSet(ModelViewSet):
 class CustomerViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, GenericViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
+    @action(detail=False, methods=['GET', 'PUT'])
+    def me(self, request):
+        (customer, created) = Customer.objects.get_or_create(user_id=request.user.id)
+        if request.method == 'GET':
+            serializer = CustomerSerializer(customer)
+            return Response(serializer.data)
+        elif request.method == 'PUT':
+            serializer = CustomerSerializer(customer, data= request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+    
