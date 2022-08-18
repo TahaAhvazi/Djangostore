@@ -6,8 +6,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from store.filters import ProductFilter
 from .permissions import IsAdminOrReadOnly
-from .models import Cart, CartItem, Customer, Order, OrderItem, Product, Collection, Review
-from .serializers import AddCartItemSerializer, CartItemSerializer, CartSerializer, CollectionSerializer, CreateOrderSerializer, CustomerSerializer, OrderSerializer, ProductSerializer, ReviewSerializer, UpdateCartItemSerializer
+from .models import Cart, CartItem, Customer, Order, OrderItem, Product, Collection, ProductIMage, Review
+from .serializers import AddCartItemSerializer, CartItemSerializer, CartSerializer, CollectionSerializer, CreateOrderSerializer, CustomerSerializer, OrderSerializer, ProductImageSerializer, ProductSerializer, ReviewSerializer, UpdateCartItemSerializer
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView, RetrieveDestroyAPIView
@@ -119,4 +119,14 @@ class OrderViewSet(ModelViewSet):
             return Order.objects.all()
         (customer_id, created) = Customer.objects.only('id').get_or_create(user_id=self.request.user.id)
         return Order.objects.filter(customer_id =customer_id)
+
+
+class ProductIMageViewSet(ModelViewSet):
+    serializer_class =  ProductImageSerializer
+    
+    def get_serializer_context(self):
+        return {'product_id': self.kwargs['product_pk']}
+
+    def get_queryset(self):
+        return ProductIMage.objects.filter(product_id=self.kwargs['product_pk'])
     
